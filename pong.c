@@ -9,11 +9,14 @@ volatile sig_atomic_t running = 1;
 
 int usleep(useconds_t usec);
 
-void handle_sigusr1(int sig)
+void handle_sigusr2(int sig, siginfo_t *info, void *context)
 {
 	(void)sig;
+	(void)info;
+	(void)context;
+	ping_pid = info->si_pid;
 	write(1, "Pong 🏓\n", 7);
-	kill(ping_pid, SIGUSR2);
+	kill(ping_pid, SIGUSR1);
 	usleep(500000);
 }
 
@@ -33,8 +36,17 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	ping_pid = atoi(argv[1]);
-	signal(SIGUSR1, handle_sigusr1);
-	signal(SIGINT, handle_sigint);
+	struct sigaction sa;
+	sa.sa_sigaction = handle_sigusr2;
+	sa.sa_flags = SA_SIGINFO;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGUSR1, &sa, NULL);
+	struct sigaction sb;
+	sb.sa_sigaction = handle_sigusr2;
+	sb.sa_flags = SA_SIGINFO;
+	sigemptyset(&sb.sa_mask);
+	sigaction(SIGUSR2, &sb, NULL);
+	kill(ping_pid,SIGUSR1);
 	while (running)
 		pause();
 	return (0);
