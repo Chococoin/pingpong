@@ -13,8 +13,10 @@ void	handle_sigusr1	(int sig, siginfo_t *info, void *context)
 {
 	(void)sig;
 	(void)context;
+	if (pong_pid != 0)
+		return;
 	pong_pid = info->si_pid;
-	write(1, "Ping 🏓\n", 7);
+	write(1, "Ping1 🏓\n", 7);
 	kill(pong_pid, SIGUSR2);
 	usleep(500000);
 }
@@ -23,8 +25,10 @@ void handle_sigusr2(int sig, siginfo_t *info, void *context)
 {
     (void)sig;
     (void)context;
-    (void)info; // Added to silence unused parameter warning
-    write(1, "Ping 🏓\n", 7);
+    (void)info;
+    write(1, "Ping2 🏓\n", 7);
+    if (pong_pid == 0)
+        pong_pid = info->si_pid;
     kill(pong_pid, SIGUSR1);
     usleep(500000);
 }
@@ -53,7 +57,6 @@ int	main(void)
 	sigaction(SIGUSR2, &sb, NULL);
 	printf("Ping listo a servir! PID: %d\n", getpid());
 	printf("Esperando pong... \n");
-	kill(pong_pid,SIGUSR1);
 	while (running)
 		pause();
 	return (0);
