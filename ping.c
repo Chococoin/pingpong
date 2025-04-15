@@ -13,9 +13,8 @@ void	handle_sigusr1	(int sig, siginfo_t *info, void *context)
 {
 	(void)sig;
 	(void)context;
-	if (pong_pid != 0)
-		return;
-	pong_pid = info->si_pid;
+	if (pong_pid == 0)
+		pong_pid = info->si_pid;
 	write(1, "Ping1 🏓\n", 7);
 	kill(pong_pid, SIGUSR2);
 	usleep(500000);
